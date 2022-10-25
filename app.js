@@ -19,11 +19,11 @@ app.post("/register", async (req, res) => {
   // Our register logic starts here
   try {
     // Get user input
-    const { first_name, last_name, email, password } = req.body;
+    const { fullName, email, password } = req.body;
 
     // Validate user input
-    if (!(email && password && first_name && last_name)) {
-      res.status(400).send("All input is required");
+    if (!(email && password && fullName)) {
+      res.send("All User input is required").status(400);
     }
 
     // check if user already exist
@@ -31,7 +31,7 @@ app.post("/register", async (req, res) => {
     const oldUser = await User.findOne({ email });
 
     if (oldUser) {
-      return res.status(409).send("User Already Exist. Please Login");
+      return res.send("User Already Exist. Please Login").status(409);
     }
 
     //Encrypt user password
@@ -39,8 +39,7 @@ app.post("/register", async (req, res) => {
 
     // Create user in our database
     const user = await User.create({
-      first_name,
-      last_name,
+      fullName,
       email: email.toLowerCase(), // sanitize: convert email to lowercase
       password: encryptedPassword,
     });
@@ -57,7 +56,8 @@ app.post("/register", async (req, res) => {
     user.token = token;
 
     // return new user
-    res.status(201).json(user);
+    // res.status(201).json(user); //Reply with all user details
+    res.json(user.token).status(201); //Reply with user token
   } catch (err) {
     console.log(err);
   }
@@ -73,7 +73,7 @@ app.post("/login", async (req, res) => {
 
     // Validate user input
     if (!(email && password)) {
-      res.status(400).send("All input is required");
+      res.send("All input is required").status(400);
     }
     // Validate if user exist in our database
     const user = await User.findOne({ email });
@@ -92,18 +92,25 @@ app.post("/login", async (req, res) => {
       user.token = token;
 
       // user
-      res.status(200).json(user);
+      // res.status(200).json(user); //Reply with all user details
+      res.status(200).json(user.token); //Reply with user token
     }
-    res.status(400).send("Invalid Credentials");
+    res.send("Invalid Credentials").status(400);
   } catch (err) {
     console.log(err);
   }
   // Our login logic ends here
 });
 
-//Welcome 
-app.post("/welcome", auth, (req, res) => {
-  res.status(200).send("Welcome 🙌 ");
+//Users
+app.post("/users", auth, async (req, res) => {
+  // res.status(200).send("Welcome 🙌 ");
+  const users = await User.find();
+  res.json(users).status(200);
 });
 
+//db.collection.findOne()
+//db.collection.findOneAndReplace()
+//db.collection.findOneAndDelete()
+//db.collection.find()
 module.exports = app;
