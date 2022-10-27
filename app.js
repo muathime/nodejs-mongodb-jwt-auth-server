@@ -23,7 +23,7 @@ app.post("/register", async (req, res) => {
 
     // Validate user input
     if (!(email && password && fullName)) {
-      res.send("All User input is required").status(400);
+      res.status(400).send("All User input is required");
     }
 
     // check if user already exist
@@ -31,7 +31,7 @@ app.post("/register", async (req, res) => {
     const oldUser = await User.findOne({ email });
 
     if (oldUser) {
-      return res.send("User Already Exist. Please Login").status(409);
+      return res.status(409).send("User Already Exist. Please Login");
     }
 
     //Encrypt user password
@@ -46,7 +46,7 @@ app.post("/register", async (req, res) => {
 
     // Create token
     const token = jwt.sign(
-      { user_id: user._id, email },
+      { user_id: user._id, email, fullName },
       process.env.TOKEN_KEY,
       {
         expiresIn: "2h",
@@ -57,7 +57,7 @@ app.post("/register", async (req, res) => {
 
     // return new user
     // res.status(201).json(user); //Reply with all user details
-    res.json(user.token).status(201); //Reply with user token
+    res.status(201).json(user.token); //Reply with user token
   } catch (err) {
     console.log(err);
   }
@@ -73,15 +73,15 @@ app.post("/login", async (req, res) => {
 
     // Validate user input
     if (!(email && password)) {
-      res.send("All input is required").status(400);
+      res.status(400).send("All input is required");
     }
     // Validate if user exist in our database
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       // Create token
       const token = jwt.sign(
-        { user_id: user._id, email },
+        { user_id: user._id, email, fullName: user.fullName },
         process.env.TOKEN_KEY,
         {
           expiresIn: "2h",
@@ -95,7 +95,7 @@ app.post("/login", async (req, res) => {
       // res.status(200).json(user); //Reply with all user details
       res.status(200).json(user.token); //Reply with user token
     }
-    res.send("Invalid Credentials").status(400);
+    res.status(400).send("Invalid Credentials");
   } catch (err) {
     console.log(err);
   }
@@ -106,7 +106,7 @@ app.post("/login", async (req, res) => {
 app.post("/users", auth, async (req, res) => {
   // res.status(200).send("Welcome 🙌 ");
   const users = await User.find();
-  res.json(users).status(200);
+  res.status(200).json(users);
 });
 
 //db.collection.findOne()
